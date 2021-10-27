@@ -130,7 +130,7 @@ public class TagDataActivity extends AppCompatActivity {
     @InstanceState
     boolean initialUserDataInitialized;
     @InstanceState
-    boolean isAppDataInitialized;
+    public boolean isAppDataInitialized;
     @InstanceState
     boolean initialAppDataInitialized;
     @InstanceState
@@ -184,10 +184,6 @@ public class TagDataActivity extends AppCompatActivity {
         appDataSwitch.setOnCheckedChangeListener((compoundButton, b) -> onAppDataSwitchClicked(b));
 
         loadData();
-    }
-
-    public boolean isAppDataInitialized() {
-        return isAppDataInitialized;
     }
 
     CustomTarget<Bitmap> amiiboImageTarget = new CustomTarget<Bitmap>() {

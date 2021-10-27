@@ -93,16 +93,13 @@ public class AmiiboActivity extends AppCompatActivity {
         toolbar.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.mnu_activate:
-                    modifyBank(EliteActivity.ACTIVATE);
+                    modifyBank(TagMo.ACTION_ACTIVATE_BANK);
                     return true;
                 case R.id.mnu_refresh:
                     Intent refresh = new Intent(this, NfcActivity_.class);
                     refresh.setAction(TagMo.ACTION_SCAN_TAG);
                     refresh.putExtra(TagMo.EXTRA_CURRENT_BANK, current_bank);
                     onEditTagResult.launch(refresh);
-                    return true;
-                case R.id.mnu_replace:
-                    modifyBank(EliteActivity.REPLACE);
                     return true;
                 case R.id.mnu_write:
                     writeTag();
@@ -113,17 +110,20 @@ public class AmiiboActivity extends AppCompatActivity {
                 case R.id.mnu_save:
                     displayBackupDialog();
                     return true;
-                case R.id.mnu_backup:
-                    modifyBank(EliteActivity.BACKUP);
-                    return true;
                 case R.id.mnu_edit:
                     openTagEditor();
+                    return true;
+                case R.id.mnu_replace:
+                    modifyBank(TagMo.ACTION_REPLACE_AMIIBO);
                     return true;
                 case R.id.mnu_view_hex:
                     viewHex();
                     return true;
+                case R.id.mnu_backup:
+                    modifyBank(TagMo.ACTION_BACKUP_AMIIBO);
+                    return true;
                 case R.id.mnu_wipe_bank:
-                    modifyBank(EliteActivity.WIPE_BANK);
+                    modifyBank(TagMo.ACTION_FORMAT_BANK);
                     return true;
                 case R.id.mnu_ignore_tag_id:
                     ignoreTagTd = !item.isChecked();
@@ -153,6 +153,9 @@ public class AmiiboActivity extends AppCompatActivity {
 
     @Click(R.id.container)
     void onContainerClick() {
+        Intent intent = new Intent(TagMo.ACTION_NFC_SCANNED);
+        intent.putExtra(TagMo.EXTRA_TAG_DATA, this.tagData);
+        setResult(Activity.RESULT_OK, intent);
         finish();
     }
 
@@ -260,11 +263,10 @@ public class AmiiboActivity extends AppCompatActivity {
     });
 
 
-    void modifyBank(int selection) {
-        Intent action = new Intent(TagMo.ACTION_NFC_SCANNED);
-        action.putExtra(TagMo.EXTRA_TAG_DATA, this.tagData);
-        action.putExtra(TagMo.EXTRA_BANK_ACTION, selection);
-        setResult(Activity.RESULT_OK, action);
+    void modifyBank(String action) {
+        Intent selected = new Intent(action);
+        selected.putExtra(TagMo.EXTRA_TAG_DATA, this.tagData);
+        setResult(Activity.RESULT_OK, selected);
         finish();
     }
 
@@ -413,10 +415,6 @@ public class AmiiboActivity extends AppCompatActivity {
                         .into(amiiboImageTarget);
             }
         }
-
-        Intent intent = new Intent(TagMo.ACTION_NFC_SCANNED);
-        intent.putExtra(TagMo.EXTRA_TAG_DATA, this.tagData);
-        setResult(Activity.RESULT_OK, intent);
     }
 
     void setAmiiboInfoText(TextView textView, CharSequence text, boolean hasTagInfo) {
@@ -451,5 +449,10 @@ public class AmiiboActivity extends AppCompatActivity {
     @UiThread
     public void showToast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        onContainerClick();
     }
 }
