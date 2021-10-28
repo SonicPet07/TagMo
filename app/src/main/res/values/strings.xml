@@ -173,6 +173,8 @@
 
     <string name="delete_amiibo">Deleting %1$s. Are you sure?</string>
     <string name="delete_active">Cannot delete the active bank!</string>
+    <string name="refresh_required">Amiibo data refresh required!</string>
+    <string name="write_suggested">Save Amiibo to retain changes!</string>
 
     <string name="encryption_keys">Encryption Keys</string>
     <string name="pref_import_keys">Import Keys</string>

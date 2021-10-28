@@ -80,6 +80,7 @@ public class AmiiboActivity extends AppCompatActivity {
     AmiiboManager amiiboManager = null;
     boolean isResponsive = false;
     int current_bank = -1;
+    boolean hasRefreshedData = false;
 
     @InstanceState
     boolean ignoreTagTd;
@@ -88,6 +89,10 @@ public class AmiiboActivity extends AppCompatActivity {
     void afterViews() {
         if (getCallingActivity() != null) {
             isResponsive = getCallingActivity().getClassName().equals(EliteActivity_.class.getName());
+        }
+        if (getIntent().hasExtra(TagMo.EXTRA_CURRENT_BANK)) {
+            current_bank = getIntent().getIntExtra(TagMo.EXTRA_CURRENT_BANK,
+                    TagMo.getPrefs().eliteActiveBank().get());
         }
         toolbar.inflateMenu(isResponsive ? R.menu.elite_menu : R.menu.amiibo_menu);
         toolbar.setOnMenuItemClickListener(item -> {
@@ -99,7 +104,7 @@ public class AmiiboActivity extends AppCompatActivity {
                     Intent refresh = new Intent(this, NfcActivity_.class);
                     refresh.setAction(TagMo.ACTION_SCAN_TAG);
                     refresh.putExtra(TagMo.EXTRA_CURRENT_BANK, current_bank);
-                    onEditTagResult.launch(refresh);
+                    onRefreshTagResult.launch(refresh);
                     return true;
                 case R.id.mnu_write:
                     writeTag();
@@ -111,13 +116,21 @@ public class AmiiboActivity extends AppCompatActivity {
                     displayBackupDialog();
                     return true;
                 case R.id.mnu_edit:
-                    openTagEditor();
+                    if (isResponsive && !hasRefreshedData) {
+                        showToast(getString(R.string.refresh_required));
+                    } else {
+                        openTagEditor();
+                    }
                     return true;
                 case R.id.mnu_replace:
                     modifyBank(TagMo.ACTION_REPLACE_AMIIBO);
                     return true;
                 case R.id.mnu_view_hex:
-                    viewHex();
+                    if (isResponsive && !hasRefreshedData) {
+                        showToast(getString(R.string.refresh_required));
+                    } else {
+                        viewHex();
+                    }
                     return true;
                 case R.id.mnu_backup:
                     modifyBank(TagMo.ACTION_BACKUP_AMIIBO);
@@ -132,20 +145,18 @@ public class AmiiboActivity extends AppCompatActivity {
             }
             return false;
         });
-        if (getIntent().hasExtra(TagMo.EXTRA_CURRENT_BANK)) {
-            current_bank = getIntent().getIntExtra(TagMo.EXTRA_CURRENT_BANK,
-                    TagMo.getPrefs().eliteActiveBank().get());
-        }
 
         loadAmiiboManager();
         updateAmiiboView();
     }
 
-    ActivityResultLauncher<Intent> onEditTagResult = registerForActivityResult(
+    ActivityResultLauncher<Intent> onRefreshTagResult = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
 
-        if (!TagMo.ACTION_EDIT_COMPLETE.equals(result.getData().getAction())) return;
+        if (!TagMo.ACTION_NFC_SCANNED.equals(result.getData().getAction())) return;
+
+        hasRefreshedData = true;
 
         this.tagData = result.getData().getByteArrayExtra(TagMo.EXTRA_TAG_DATA);
         this.runOnUiThread(this::updateAmiiboView);
@@ -158,6 +169,21 @@ public class AmiiboActivity extends AppCompatActivity {
         setResult(Activity.RESULT_OK, intent);
         finish();
     }
+
+    ActivityResultLauncher<Intent> onEditTagResult = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+
+        if (!TagMo.ACTION_EDIT_COMPLETE.equals(result.getData().getAction())) return;
+
+        this.tagData = result.getData().getByteArrayExtra(TagMo.EXTRA_TAG_DATA);
+        this.runOnUiThread(this::updateAmiiboView);
+
+        if (!isResponsive) {
+            // TODO: Update the AmiiboFile with the modified data
+            showToast(getString(R.string.write_suggested));
+        }
+    });
 
     void openTagEditor() {
         Intent intent = new Intent(this, TagDataActivity_.class);
