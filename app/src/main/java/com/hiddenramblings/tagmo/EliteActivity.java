@@ -256,8 +256,7 @@ public class EliteActivity extends AppCompatActivity implements
             }
         });
 
-        writerListView.setAdapter(new EliteWriteBlankAdapter(
-                settings, itemClick, amiiboFiles).withHighlight(true));
+        writerListView.setAdapter(new EliteWriteBlankAdapter(settings, itemClick, amiiboFiles));
         this.settings.addChangeListener((BrowserSettings.BrowserSettingsListener) writerListView.getAdapter());
         writeDialog.getWindow().setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
